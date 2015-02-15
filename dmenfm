@@ -28,9 +28,9 @@ function defaults {
     dmenu_fg='#9999CC'
     dmenu_sbg='#000066'
     dmenu_sfg='#FFFFFF'
-    executor='exo-open'
-    editor='geany'
-    filemanager='thunar'
+    executor='autoprogramselect'
+    editor='xterm -e vim'
+    filemanager='xterm -d'
 }
 
 function saveconfig {
@@ -46,7 +46,7 @@ dmenu_fg='$dmenu_fg'
 dmenu_sbg='$dmenu_sbg'
 dmenu_sfg='$dmenu_sfg'
 editor=\"$editor\"
-executor='exo'
+executor=\"$executor\"
 filemanager=\"$filemanager\"
 last_dir=\"$(pwd)\"
 " > "$config"
@@ -56,6 +56,7 @@ function setmenu {
     menu="$menu $([ "$dmenu_caseinsens" == '1' ] && echo '-i') $([ "$dmenu_onbottom" == '1' ] && echo '-b') -nb $dmenu_bg -nf $dmenu_fg -sb $dmenu_sbg -sf $dmenu_sfg"
 }
 
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 file=1
 config_file="preferences"
 config_dir="$XDG_CONFIG_HOME/dmenfm"
@@ -77,7 +78,11 @@ setmenu
 [[ "$last_dir" && "$open_last" == 1 ]] && cd "$last_dir"
 
 while [ "$file" ]; do
-    file=$((echo -e '..\n.'; ls $([[ "$show_hidden" == '1' ]] && echo '-A') $([[ "$show_backup" == '1' ]] && echo '-B'); echo -e "[Preferences]\n[Open in $filemanager]"; ls -B "$plugins_dir/browser") | $menu -p "$(basename $(pwd))")
+    if [ -z "$no_scan" ]; then
+        file=$((echo -e '..\n.'; ls $([[ "$show_hidden" == '1' ]] && echo '-A') $([[ "$show_backup" == '1' ]] && echo '-B'); echo -e "[Preferences]\n[Open in $filemanager]"; ls -B "$plugins_dir/browser") | $menu -p "$(basename $(pwd))")
+    else
+	unset no_scan
+    fi
     if [ "$file" ]; then
         if [ -e "$file" ]; then
             if $([ -d "$file" ] && [[ "$always_open_dirs" != '1' && "$file" != "." && "$file" != ".." ]]) || $([ -f "$file" ] && [[ "$always_open_files" != '1' ]]); then
@@ -223,7 +228,7 @@ About"; ls -B "$plugins_dir/preferences") | $menu -p "Preferences")
                     *'Executor')
                         opt=$(echo -e "$executor\n[Default]" | $menu -p "Executor:")
                         [[ "$opt" == '[Default]' ]] && opt='exo'
-                        [ "$opt" ] && editor="$opt"
+                        [ "$opt" ] && executor="$opt"
                     ;;
                     *'Editor')
                         opt=$(echo -e "$editor\n[Default]" | $menu -p "Editor:")
